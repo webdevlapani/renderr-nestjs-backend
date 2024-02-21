@@ -1,0 +1,67 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  email         String    @unique
+  username      String    @unique
+  biography     String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  picture       String?
+  password      String?
+  comments      Comment[]
+  posts         Post[]
+  followers     User[]    @relation("authorFollowers", fields: [followersIds], references: [id])
+  followersIds  String[]  @db.ObjectId
+  following     User[]    @relation("authorFollowers", fields: [followingIds], references: [id])
+  followingIds  String[]  @db.ObjectId
+  postsLiked    Post[]    @relation("likedPosts", fields: [postsLikedIds], references: [id])
+  postsLikedIds String[]  @db.ObjectId
+}
+
+model Post {
+  id                String    @id @default(auto()) @map("_id") @db.ObjectId
+  title             String
+  slug              String    @unique
+  category          category  @relation(fields: [categoryId], references: [id])
+  description       String
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  body              String
+  tagList           String[]  @default([])
+  favouritedUsers   User[]    @relation("likedPosts", fields: [favouritedUserIds], references: [id])
+  favouritedUserIds String[]  @db.ObjectId
+  author            User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId          String    @db.ObjectId
+  comments          Comment[]
+  categoryId        String    @db.ObjectId
+}
+
+model category {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  label     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  Post      Post[]
+}
+
+model Comment {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  body      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId  String   @db.ObjectId
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId    String   @db.ObjectId
+}
